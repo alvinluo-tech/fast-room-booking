@@ -195,10 +195,11 @@ export async function book(payload: BookingPayload, cookies: SimplyBookCookies) 
   console.log("📍 [Book] 用户信息 - 邮箱:", userEmail, "名字:", userName);
   
   // 更新 payload 中的用户信息
-  if (payload.current_booking) {
-    payload.current_booking.client_email = userEmail;
-    payload.current_booking.client_name = userName;
-    payload.current_booking.client_phone = userPhone;
+  if (payload.current_booking && typeof payload.current_booking === "object") {
+    const booking = payload.current_booking as Record<string, unknown>;
+    booking.client_email = userEmail;
+    booking.client_name = userName;
+    booking.client_phone = userPhone;
   }
   
   // 构建 Cookie header（排除特殊的 __ 前缀字段）
@@ -224,9 +225,10 @@ export async function book(payload: BookingPayload, cookies: SimplyBookCookies) 
     cookie: cookieHeader,
   };
   
+  const booking = (payload.current_booking as Record<string, unknown>) || {};
   console.log("📍 [Book] 发送预约请求");
-  console.log("📍 [Book] 日期:", payload.current_booking?.start_date);
-  console.log("📍 [Book] 时间:", payload.current_booking?.start_time);
+  console.log("📍 [Book] 日期:", booking.start_date);
+  console.log("📍 [Book] 时间:", booking.start_time);
   console.log("📍 [Book] Cookie 数量:", Object.keys(cookies).length - 4); // 减去 __ 开头的字段
   console.log("📍 [Book] CSRF Token:", csrfToken.substring(0, 20) + "...");
   console.log("📍 [Book] Debug ID:", debugId.substring(0, 20) + "...");
