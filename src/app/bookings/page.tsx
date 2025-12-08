@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 type Booking = {
   id?: string;
+  hash?: string;
   service_name?: string;
   provider_name?: string;
   start_datetime?: string;
@@ -13,6 +14,7 @@ type Booking = {
   end_time?: string;
   code?: string;
   status?: string;
+  is_cancellable?: string;
   service?: { name?: string };
   provider?: { name?: string };
 } & Record<string, unknown>;
@@ -40,13 +42,17 @@ export default function BookingsPage() {
     loadBookings();
   }, []);
 
-  const cancelBooking = async (bookingId: string) => {
+  const cancelBooking = async (bookingId: string, bookingHash: string) => {
     if (!confirm("确定要取消这个预约吗？")) return;
     
     setCanceling(bookingId);
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ hash: bookingHash }),
       });
       const data = await res.json();
       
@@ -54,7 +60,7 @@ export default function BookingsPage() {
         alert("预约已取消");
         loadBookings(); // 重新加载列表
       } else {
-        alert(`取消失败: ${data.data}`);
+        alert(`取消失败: ${JSON.stringify(data)}`);
       }
     } catch (error) {
       alert(`取消失败: ${error}`);
@@ -77,74 +83,81 @@ export default function BookingsPage() {
 
   return (
     <div className="min-h-screen bg-slate-900">
-      <div className="absolute inset-0 bg-gradient-radial from-violet-600/20 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-800/30 via-slate-900 to-slate-900 pointer-events-none" />
       
-      <div className="relative max-w-7xl mx-auto px-6 py-12 space-y-8">
+      {/* 移除pt-[90px]，使用layout的pt-36统一间距 */}
+      <div className="relative max-w-7xl mx-auto px-6 py-8 space-y-8">
         <div className="flex gap-6 items-center flex-wrap">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold text-white">
             Upcoming Bookings
           </h1>
           <button 
-            className="px-4 py-2 rounded-xl border border-white/10 backdrop-blur-md bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all" 
+            className="px-4 py-2 rounded-xl border border-slate-600 backdrop-blur-md bg-slate-700/50 text-slate-100 hover:bg-slate-600 hover:text-white transition-all" 
             onClick={loadBookings}
           >
             🔄 刷新
           </button>
-          <div className="ml-auto text-sm text-slate-400">{info}</div>
+          <div className="ml-auto text-sm text-slate-200">{info}</div>
         </div>
         
         {items.length === 0 ? (
           <div className="text-center py-20">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-500/20 to-blue-600/20 text-4xl mb-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-slate-800/60 text-4xl mb-6">
               📭
             </div>
-            <p className="text-xl text-slate-400 mb-6">暂无预约记录</p>
-            <a href="/slots" className="inline-block px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white font-semibold shadow-lg shadow-violet-500/50 hover:shadow-xl hover:shadow-violet-500/70 transition-all hover:scale-105">
+            <p className="text-xl text-slate-300 mb-6">暂无预约记录</p>
+            <a href="/slots" className="inline-block px-6 py-3 rounded-xl bg-violet-600 text-white font-semibold shadow-lg hover:bg-violet-500 transition-all hover:scale-105">
               前往预约
             </a>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {items.map((b, i) => (
-              <div key={i} className="group rounded-2xl border border-white/10 backdrop-blur-md bg-white/5 p-6 space-y-4 hover:bg-white/10 hover:border-white/20 transition-all duration-300">
+              <div key={i} className="group rounded-2xl border border-slate-700/50 backdrop-blur-md bg-slate-800/40 p-6 space-y-4 hover:bg-slate-800/60 hover:border-slate-600 transition-all duration-300 shadow-xl">
                 <div className="font-bold text-xl text-white">
                   {String(b.service?.name || b.service_name || "Room Booking")}
                 </div>
                 
                 <div className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-2 text-sm">
-                  <div className="text-slate-400">Start:</div>
-                  <div className="font-mono text-slate-200 font-medium">{formatDateTime(b)}</div>
+                  <div className="text-slate-300">Start:</div>
+                  <div className="font-mono text-slate-100 font-medium">{formatDateTime(b)}</div>
                   
-                  <div className="text-slate-400">End:</div>
-                  <div className="font-mono text-slate-200 font-medium">{formatEndTime(b)}</div>
+                  <div className="text-slate-300">End:</div>
+                  <div className="font-mono text-slate-100 font-medium">{formatEndTime(b)}</div>
                   
-                  <div className="text-slate-400">Location:</div>
-                  <div className="text-slate-200">{String(b.provider?.name || b.provider_name || "")}</div>
+                  <div className="text-slate-300">Location:</div>
+                  <div className="text-slate-100">{String(b.provider?.name || b.provider_name || "")}</div>
                   
-                  <div className="text-slate-400">Code:</div>
+                  <div className="text-slate-300">Code:</div>
                   <div className="font-mono font-bold text-violet-400">{String(b.code || "")}</div>
                   
-                  <div className="text-slate-400">Status:</div>
+                  <div className="text-slate-300">Status:</div>
                   <div>
                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
                       b.status === "confirmed" 
-                        ? "bg-green-500/20 text-green-300 border border-green-500/30" 
-                        : "bg-slate-500/20 text-slate-300 border border-slate-500/30"
+                        ? "bg-green-600/80 text-white border border-green-500" 
+                        : "bg-slate-600 text-slate-200 border border-slate-500"
                     }`}>
                       {String(b.status || "")}
                     </span>
                   </div>
+                  
+                  <div className="text-slate-300">ID:</div>
+                  <div className="font-mono text-xs text-slate-400">{String(b.id || "")}</div>
+                  
+                  <div className="text-slate-300">Hash:</div>
+                  <div className="font-mono text-xs text-slate-400">{String(b.hash || "").substring(0, 16)}...</div>
                 </div>
                 
                 <div className="flex gap-3 pt-2">
                   <button 
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20 hover:border-red-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
-                    onClick={() => cancelBooking(String(b.id))}
-                    disabled={canceling === String(b.id)}
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-red-500 bg-red-600/80 text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+                    onClick={() => cancelBooking(String(b.id), String(b.hash || ""))}
+                    disabled={canceling === String(b.id) || b.is_cancellable !== "1"}
                   >
-                    {canceling === String(b.id) ? "取消中..." : "取消预约"}
+                    {canceling === String(b.id) ? "取消中..." : b.is_cancellable !== "1" ? "不可取消" : "取消预约"}
                   </button>
-                  <button className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-all font-medium shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/50">
+                  <button className="flex-1 px-4 py-2.5 rounded-xl bg-amber-600 text-white hover:bg-amber-500 transition-all font-medium shadow-lg">
                     📅 Add to calendar
                   </button>
                 </div>

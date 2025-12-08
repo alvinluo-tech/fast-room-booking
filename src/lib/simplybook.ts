@@ -293,26 +293,110 @@ export async function getUpcomingBookings(cookies: SimplyBookCookies) {
   return { ok: res.ok, raw: text };
 }
 
-export async function cancelBooking(bookingId: string, cookies: SimplyBookCookies) {
+export async function cancelBooking(bookingId: string, hash: string, cookies: SimplyBookCookies) {
+  // 提取 CSRF token 和 Debug ID
+  const csrfToken = cookies["__csrf_token"] ?? "";
+  const debugId = cookies["__debug_id"] ?? "";
+  
+  // 如果没有 CSRF token,需要重新获取
+  let finalCsrfToken = csrfToken;
+  let finalDebugId = debugId;
+  
+  if (!csrfToken || !debugId) {
+    console.log("📍 [CancelBooking] 缺少 CSRF/Debug,重新获取");
+    const { csrf, debug } = await fetchCsrfAndDebug();
+    finalCsrfToken = csrf;
+    finalDebugId = debug;
+  }
+  
+  // 构建 Cookie header（排除特殊的 __ 前缀字段）
   const cookieHeader = Object.entries(cookies)
+    .filter(([k]) => !k.startsWith("__"))
     .map(([k, v]) => `${k}=${v}`)
     .join("; ");
   
+  console.log("📍 [CancelBooking] 取消预约 ID:", bookingId);
+  console.log("📍 [CancelBooking] 使用前端提供的 Hash:", hash || "未提供");
+  console.log("📍 [CancelBooking] CSRF Token:", finalCsrfToken.substring(0, 20) + "...");
+  console.log("📍 [CancelBooking] Debug ID:", finalDebugId.substring(0, 20) + "...");
+  console.log("📍 [CancelBooking] Cookies:", Object.keys(cookies).filter(k => !k.startsWith("__")).join(", "));
+  
   const headers: Record<string, string> = {
     accept: "application/json, text/javascript, */*; q=0.01",
-    "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-    "cache-control": "no-cache",
-    "content-type": "application/json",
+    "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+    origin: `${BASE}`,
+    priority: "u=1, i",
+    referer: `${BASE}/v2/`,
+    "sec-ch-ua": '"Chromium";v="142", "Microsoft Edge";v="142", "Not_A Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0",
+    "x-csrf-token": finalCsrfToken,
+    "x-debug": finalDebugId,
     "x-requested-with": "XMLHttpRequest",
     cookie: cookieHeader,
   };
 
-  const res = await fetch(`${BASE}/v2/booking/${bookingId}/`, {
+  // 如果前端没有提供 hash，则需要先获取
+  let finalHash = hash;
+  if (!finalHash) {
+    console.log("📍 [CancelBooking] Hash 未提供，先获取预约详情");
+    const getBookingUrl = new URL(`${BASE}/v2/booking/`);
+    getBookingUrl.searchParams.set("booking_ids[]", bookingId);
+    
+    const getRes = await fetch(getBookingUrl, {
+      headers: {
+        accept: "application/json, text/javascript, */*; q=0.01",
+        "x-requested-with": "XMLHttpRequest",
+        "x-csrf-token": finalCsrfToken,
+        "x-debug": finalDebugId,
+        cookie: cookieHeader,
+      },
+    });
+
+    const bookingText = await getRes.text();
+    console.log("📍 [CancelBooking] 预约详情响应:", bookingText.substring(0, 300));
+    
+    let bookingData: any = {};
+    try {
+      bookingData = JSON.parse(bookingText);
+    } catch (e) {
+      console.error("❌ [CancelBooking] 解析预约详情失败:", e);
+      return { ok: false, raw: bookingText };
+    }
+    
+    finalHash = bookingData?.bookings?.[0]?.hash ?? "";
+    console.log("📍 [CancelBooking] 从 API 获取到 hash:", finalHash || "未找到");
+  }
+
+  if (!finalHash) {
+    console.error("❌ [CancelBooking] 无法获取预约 hash,取消失败");
+    return { ok: false, raw: JSON.stringify({ error: "无法获取预约 hash" }) };
+  }
+
+  // 构建 form data
+  const formData = new URLSearchParams();
+  formData.append("id", bookingId);
+  formData.append("hash", finalHash);
+  formData.append("reason", "");
+
+  console.log("📍 [CancelBooking] 发送 DELETE 请求");
+  console.log("📍 [CancelBooking] Form Data:", formData.toString());
+  
+  const res = await fetch(`${BASE}/v2/booking/`, {
     method: "DELETE",
     headers,
+    body: formData.toString(),
   });
 
   const text = await res.text();
+  console.log("📍 [CancelBooking] 响应状态:", res.status);
+  console.log("📍 [CancelBooking] 响应内容:", text.substring(0, 200));
+  
   return { ok: res.ok, raw: text };
 }
 
