@@ -34,19 +34,20 @@ export default function LoginPage() {
       
       <div className="relative max-w-md w-full">
         <div className="text-center space-y-4 mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 text-white text-3xl shadow-2xl shadow-violet-500/50">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-white text-4xl shadow-[0_0_40px_rgba(139,92,246,0.7),0_0_80px_rgba(139,92,246,0.4),0_8px_24px_rgba(0,0,0,0.5)] animate-pulse">
             🔒
           </div>
           <h2 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">登录 SimplyBook</h2>
           <p className="text-slate-400">使用账户登录后即可查看并预约房间</p>
         </div>
         
-        <div className="rounded-2xl border border-white/10 backdrop-blur-md bg-white/5 p-8 shadow-2xl">
+        {/* Premium Card Container with floating depth */}
+        <div className="rounded-3xl border border-slate-600/50 bg-slate-800/90 backdrop-blur-xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.6),0_0_1px_rgba(139,92,246,0.3)] ring-1 ring-white/5">
           <form onSubmit={onSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">邮箱</label>
+              <label className="text-sm font-semibold text-slate-200">邮箱</label>
               <input 
-                className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all outline-none" 
+                className="w-full h-14 px-5 rounded-xl border border-slate-600/50 bg-slate-900/60 text-white text-base placeholder-slate-500 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] focus:shadow-[0_0_0_3px_rgba(139,92,246,0.5),inset_0_1px_2px_rgba(139,92,246,0.2)] focus:border-violet-400 focus:bg-slate-900/80 transition-all duration-300 outline-none" 
                 placeholder="your-email@durham.ac.uk"
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
@@ -54,9 +55,9 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300">密码</label>
+              <label className="text-sm font-semibold text-slate-200">密码</label>
               <input 
-                className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-slate-500 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all outline-none" 
+                className="w-full h-14 px-5 rounded-xl border border-slate-600/50 bg-slate-900/60 text-white text-base placeholder-slate-500 shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] focus:shadow-[0_0_0_3px_rgba(139,92,246,0.5),inset_0_1px_2px_rgba(139,92,246,0.2)] focus:border-violet-400 focus:bg-slate-900/80 transition-all duration-300 outline-none" 
                 type="password" 
                 placeholder="••••••••"
                 value={password} 
@@ -66,7 +67,7 @@ export default function LoginPage() {
             </div>
             <button 
               type="submit" 
-              className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white font-semibold shadow-lg shadow-violet-500/50 hover:shadow-xl hover:shadow-violet-500/70 disabled:opacity-60 disabled:cursor-not-allowed transition-all hover:scale-[1.02]" 
+              className="w-full h-12 px-6 rounded-full bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold text-base shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_6px_16px_rgba(139,92,246,0.5),0_3px_10px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_8px_24px_rgba(139,92,246,0.6),0_4px_14px_rgba(0,0,0,0.5)] active:shadow-[inset_0_3px_8px_rgba(0,0,0,0.3),0_2px_8px_rgba(139,92,246,0.4)] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 hover:scale-[1.02]" 
               disabled={loading}
             >
               {loading ? "登录中..." : "登录"}

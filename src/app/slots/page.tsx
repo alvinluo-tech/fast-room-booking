@@ -192,7 +192,8 @@ export default function SlotsPage() {
   };
 
   const current = useMemo(() => new Date(date), [date]);
-  const monthLabel = `${current.toLocaleString("default", { month: "long" })} ${current.getFullYear()}`;
+  const monthName = current.toLocaleString("en-US", { month: "long" }).toUpperCase();
+  const yearNum = current.getFullYear();
   const first = new Date(current.getFullYear(), current.getMonth(), 1);
   const startWeekday = (first.getDay() + 6) % 7; // make Monday=0
   const daysInMonth = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
@@ -216,24 +217,28 @@ export default function SlotsPage() {
 
   return (
     <div className="min-h-screen bg-slate-900">
-      <div className="absolute inset-0 bg-gradient-radial from-violet-600/20 via-transparent to-transparent pointer-events-none" />
+      {/* 更清洁的深色背景渐变 */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-800/20 via-slate-900 to-slate-900 pointer-events-none" />
       
-      <div className="relative max-w-6xl mx-auto px-6 py-12 space-y-8">
-        {/* Calendar Card */}
-        <div className="rounded-2xl border border-white/10 backdrop-blur-md bg-white/5 overflow-hidden">
-          <div className="flex items-center justify-between p-6 border-b border-white/10">
-            <button className="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all" onClick={prevMonth}>
-              ← Prev
+      {/* 移除pt-[90px]，因为layout已经有pt-36(144px)，避免重复间距 */}
+      <div className="relative max-w-6xl mx-auto px-6 py-8 space-y-8">
+        {/* Calendar Card - 修复：背景与主页面完全匹配 */}
+        <div className="rounded-2xl border-2 border-slate-600/60 overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.5)] bg-slate-900">
+          <div className="flex items-center justify-between p-6 border-b border-slate-600/50 bg-slate-800/80">
+            <button className="w-12 h-12 rounded-xl border border-slate-600 bg-slate-700/50 text-slate-100 hover:bg-slate-600 hover:text-white transition-all font-bold text-xl flex items-center justify-center" onClick={prevMonth}>
+              &lt;
             </button>
-            <div className="font-bold text-xl text-white">{monthLabel}</div>
-            <button className="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all" onClick={nextMonth}>
-              Next →
+            <div className="font-bold text-2xl text-white whitespace-nowrap tracking-wide">
+              {monthName} <span className="text-slate-400 mx-2">|</span> {yearNum}
+            </div>
+            <button className="w-12 h-12 rounded-xl border border-slate-600 bg-slate-700/50 text-slate-100 hover:bg-slate-600 hover:text-white transition-all font-bold text-xl flex items-center justify-center" onClick={nextMonth}>
+              &gt;
             </button>
           </div>
-          <div className="p-6">
+          <div className="p-6 bg-slate-900">
             <div className="grid grid-cols-7 gap-2">
               {['MON','TUE','WED','THU','FRI','SAT','SUN'].map((w) => (
-                <div key={w} className="text-center py-2 text-xs font-semibold text-slate-400">{w}</div>
+                <div key={w} className="text-center py-2 text-xs font-semibold text-slate-300">{w}</div>
               ))}
               {Array.from({ length: startWeekday }).map((_, i) => (<div key={`x${i}`}></div>))}
               {Array.from({ length: daysInMonth }).map((_, i) => {
@@ -243,10 +248,10 @@ export default function SlotsPage() {
                   <button 
                     key={d} 
                     onClick={() => pickDay(d)} 
-                    className={`h-12 rounded-xl font-medium transition-all ${
+                    className={`h-12 rounded-xl font-medium transition-all duration-300 text-base ${
                       isSelected 
-                        ? 'bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-500/50' 
-                        : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white hover:scale-105'
+                        ? 'bg-violet-600 text-white font-bold shadow-[0_0_20px_rgba(139,92,246,0.6),0_4px_12px_rgba(0,0,0,0.5)] scale-105' 
+                        : 'bg-slate-800/60 text-slate-100 hover:bg-slate-700 hover:text-white hover:scale-105 shadow-[inset_0_1px_2px_rgba(0,0,0,0.3),0_2px_6px_rgba(0,0,0,0.3)] hover:shadow-[inset_0_1px_2px_rgba(0,0,0,0.2),0_4px_10px_rgba(0,0,0,0.4)]'
                     }`}
                   >
                     {d}
@@ -260,20 +265,20 @@ export default function SlotsPage() {
         {/* Time Slots Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
+            <h2 className="text-2xl font-bold text-white">
               Available Times
             </h2>
             {selectedTimes.size > 0 && (
               <div className="flex gap-3">
                 <button 
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white font-semibold shadow-lg shadow-violet-500/50 hover:shadow-xl hover:shadow-violet-500/70 disabled:opacity-60 disabled:cursor-not-allowed transition-all hover:scale-105" 
+                  className="px-6 py-2.5 rounded-xl bg-violet-600 text-white font-semibold shadow-lg hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all hover:scale-105" 
                   onClick={batchBookSelected} 
                   disabled={batchBooking}
                 >
                   {batchBooking ? "预约中..." : `🚀 批量预约 (${selectedTimes.size})`}
                 </button>
                 <button 
-                  className="px-6 py-2.5 rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all" 
+                  className="px-6 py-2.5 rounded-xl border border-slate-600 bg-slate-700/50 text-slate-100 hover:bg-slate-600 hover:text-white transition-all" 
                   onClick={clearSelection}
                 >
                   清除选择
@@ -282,38 +287,38 @@ export default function SlotsPage() {
             )}
           </div>
 
-          {/* Quick Select */}
-          <div className="rounded-2xl border border-white/10 backdrop-blur-md bg-gradient-to-br from-blue-500/10 to-violet-500/10 p-6">
-            <div className="text-sm font-semibold mb-4 text-blue-300 flex items-center gap-2">
+          {/* Quick Select - 增强文字对比度，边框风格设计 */}
+          <div className="rounded-2xl border border-slate-700/50 backdrop-blur-md bg-slate-800/40 p-6 shadow-xl">
+            <div className="text-sm font-semibold mb-4 text-white flex items-center gap-2">
               ⚡ 快速选择:
             </div>
             <div className="flex gap-3 flex-wrap">
               <button 
-                className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-slate-200 hover:bg-white/20 hover:border-white/30 transition-all font-medium" 
+                className="px-5 py-2.5 rounded-xl border border-slate-600/50 bg-slate-800/30 text-slate-100 hover:text-white hover:border-violet-400/80 hover:bg-violet-900/20 transition-all duration-300 font-semibold shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),inset_0_-1px_2px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_1px_3px_rgba(139,92,246,0.3),0_0_20px_rgba(139,92,246,0.4),0_6px_16px_rgba(0,0,0,0.5)] hover:scale-105" 
                 onClick={selectAll}
               >
                 全选 ({slots.length})
               </button>
               <button 
-                className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-slate-200 hover:bg-white/20 hover:border-white/30 transition-all font-medium" 
+                className="px-5 py-2.5 rounded-xl border border-slate-600/50 bg-slate-800/30 text-slate-100 hover:text-white hover:border-violet-400/80 hover:bg-violet-900/20 transition-all duration-300 font-semibold shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),inset_0_-1px_2px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_1px_3px_rgba(139,92,246,0.3),0_0_20px_rgba(139,92,246,0.4),0_6px_16px_rgba(0,0,0,0.5)] hover:scale-105" 
                 onClick={selectMorning}
               >
                 🌅 上午 (6-12点)
               </button>
               <button 
-                className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-slate-200 hover:bg-white/20 hover:border-white/30 transition-all font-medium" 
+                className="px-5 py-2.5 rounded-xl border border-slate-600/50 bg-slate-800/30 text-slate-100 hover:text-white hover:border-violet-400/80 hover:bg-violet-900/20 transition-all duration-300 font-semibold shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),inset_0_-1px_2px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_1px_3px_rgba(139,92,246,0.3),0_0_20px_rgba(139,92,246,0.4),0_6px_16px_rgba(0,0,0,0.5)] hover:scale-105" 
                 onClick={selectAfternoon}
               >
                 ☀️ 下午 (12-18点)
               </button>
               <button 
-                className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-slate-200 hover:bg-white/20 hover:border-white/30 transition-all font-medium" 
+                className="px-5 py-2.5 rounded-xl border border-slate-600/50 bg-slate-800/30 text-slate-100 hover:text-white hover:border-violet-400/80 hover:bg-violet-900/20 transition-all duration-300 font-semibold shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),inset_0_-1px_2px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_1px_3px_rgba(139,92,246,0.3),0_0_20px_rgba(139,92,246,0.4),0_6px_16px_rgba(0,0,0,0.5)] hover:scale-105" 
                 onClick={selectEvening}
               >
                 🌙 晚上 (18点后)
               </button>
               <button 
-                className="px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30 hover:border-red-500/50 transition-all font-medium" 
+                className="px-5 py-2.5 rounded-xl border border-red-500/70 bg-transparent text-red-400 hover:text-red-300 hover:bg-red-500/20 hover:border-red-400 transition-all duration-300 font-semibold shadow-[inset_0_1px_2px_rgba(0,0,0,0.2),0_3px_10px_rgba(0,0,0,0.3)] hover:shadow-[inset_0_1px_2px_rgba(239,68,68,0.3),0_0_18px_rgba(239,68,68,0.5),0_5px_14px_rgba(0,0,0,0.4)] hover:scale-105" 
                 onClick={clearSelection}
               >
                 ✕ 清除
@@ -322,9 +327,9 @@ export default function SlotsPage() {
           </div>
 
           {/* Time Slots Grid */}
-          <div className="rounded-2xl border border-white/10 backdrop-blur-md bg-white/5 p-6">
+          <div className="rounded-2xl border border-slate-700/50 backdrop-blur-md bg-slate-800/40 p-6 shadow-xl">
             {slots.length === 0 ? (
-              <div className="text-center py-12 text-slate-400">
+              <div className="text-center py-12 text-slate-300">
                 <div className="text-4xl mb-4">📅</div>
                 <p>选择日期查看可用时间</p>
               </div>
@@ -333,13 +338,29 @@ export default function SlotsPage() {
                 {slots.map((s, i) => {
                   const time = String(s.time ?? s['time']);
                   const isSelected = selectedTimes.has(time);
+                  const isUnavailable = false; // TODO: integrate with actual booking status from API
+                  
+                  if (isUnavailable) {
+                    return (
+                      <button 
+                        key={i} 
+                        disabled
+                        className="px-6 py-3 rounded-xl font-semibold border border-slate-700 bg-slate-800/30 text-slate-500 cursor-not-allowed opacity-60"
+                      >
+                        <span className="flex items-center gap-2 line-through">
+                          <span className="font-mono text-lg">{time.slice(0,5)}</span>
+                        </span>
+                      </button>
+                    );
+                  }
+                  
                   return (
                     <button 
                       key={i} 
-                      className={`group px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                      className={`group px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
                         isSelected 
-                          ? 'bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-500/50 scale-105 ring-2 ring-violet-400' 
-                          : 'bg-white/10 border border-white/20 text-slate-200 hover:bg-white/20 hover:border-white/30 hover:scale-105'
+                          ? 'bg-violet-600 text-white shadow-[0_0_16px_rgba(139,92,246,0.5),0_4px_12px_rgba(0,0,0,0.4)] scale-105 ring-2 ring-violet-400/50' 
+                          : 'border-2 border-slate-500 bg-transparent text-slate-100 hover:bg-slate-700/30 hover:border-violet-400 hover:text-white hover:scale-105 shadow-[0_2px_8px_rgba(0,0,0,0.3)] hover:shadow-[0_4px_12px_rgba(139,92,246,0.3)]'
                       }`}
                       onClick={() => toggleTimeSelection(time)}
                     >
@@ -354,37 +375,53 @@ export default function SlotsPage() {
             )}
             
             <div className="mt-6 flex items-center justify-between text-sm">
-              <div className="text-slate-400">
+              <div className="text-slate-300">
                 💡 点击时间段进行选择，已选中的时间会高亮显示
               </div>
-              <div className="text-slate-400 font-medium">{info}</div>
+              <div className="text-slate-200 font-medium">{info}</div>
             </div>
+            
+            {/* Primary CTA Button */}
+            {selectedTimes.size > 0 && (
+              <div className="mt-8 pt-6 border-t border-slate-700/50">
+                <button
+                  onClick={() => setShowConfirmModal(true)}
+                  className="w-full py-4 px-8 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 text-white font-bold text-lg shadow-[0_8px_24px_rgba(139,92,246,0.5),0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_12px_32px_rgba(139,92,246,0.6),0_6px_16px_rgba(0,0,0,0.5)] hover:scale-[1.02] transition-all duration-300 active:scale-[0.98]"
+                >
+                  <span className="flex items-center justify-center gap-3">
+                    <span className="text-2xl">✓</span>
+                    <span>确认预约并提交</span>
+                    <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold">{selectedTimes.size} 个时段</span>
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         {/* 批量预约确认弹窗 */}
         {showConfirmModal && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowConfirmModal(false)}>
-            <div className="relative rounded-2xl border border-white/20 backdrop-blur-xl bg-slate-900/95 p-8 max-w-lg w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center text-2xl shadow-xl shadow-violet-500/50">
+            <div className="relative rounded-2xl border border-slate-600 backdrop-blur-xl bg-slate-800/95 p-8 max-w-lg w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 rounded-2xl bg-violet-600 flex items-center justify-center text-2xl shadow-xl">
                 ✨
               </div>
               
-              <h3 className="text-2xl font-bold text-center mb-2 mt-4 bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
+              <h3 className="text-2xl font-bold text-center mb-2 mt-4 text-white">
                 确认批量预约
               </h3>
-              <p className="text-center text-slate-400 mb-6">即将为您预约以下时间段</p>
+              <p className="text-center text-slate-300 mb-6">即将为您预约以下时间段</p>
               
               <div className="space-y-4 mb-8">
                 <div className="max-h-72 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                   {Array.from(selectedTimes).sort().map((time, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
-                      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white text-sm font-bold shadow-lg shadow-violet-500/30">
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-700/50 border border-slate-600 hover:bg-slate-600 transition-all">
+                      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-600 text-white text-sm font-bold shadow-lg">
                         {i + 1}
                       </span>
-                      <div className="flex-1 flex items-center gap-2 text-slate-200">
+                      <div className="flex-1 flex items-center gap-2 text-slate-100">
                         <span className="font-mono text-sm">{date}</span>
-                        <span className="text-slate-500">→</span>
+                        <span className="text-slate-400">→</span>
                         <span className="font-mono font-bold text-base">{time.slice(0, 5)}</span>
                       </div>
                       <span className="text-green-400 text-xl">✓</span>
@@ -392,24 +429,24 @@ export default function SlotsPage() {
                   ))}
                 </div>
                 
-                <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-4 flex items-start gap-3">
+                <div className="rounded-xl bg-amber-900/40 border border-amber-700/50 p-4 flex items-start gap-3">
                   <span className="text-amber-400 text-xl">⚠️</span>
                   <div className="flex-1">
                     <div className="text-amber-300 font-semibold">注意</div>
-                    <div className="text-amber-200/80 text-sm">共 <span className="font-bold">{selectedTimes.size}</span> 个时间段，请确认后提交</div>
+                    <div className="text-amber-100 text-sm">共 <span className="font-bold">{selectedTimes.size}</span> 个时间段，请确认后提交</div>
                   </div>
                 </div>
               </div>
               
               <div className="flex gap-4">
                 <button 
-                  className="flex-1 px-6 py-3 rounded-xl border border-white/20 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all font-semibold" 
+                  className="flex-1 px-6 py-3 rounded-xl border border-slate-600 bg-slate-700/50 text-slate-100 hover:bg-slate-600 hover:text-white transition-all font-semibold" 
                   onClick={() => setShowConfirmModal(false)}
                 >
                   取消
                 </button>
                 <button 
-                  className="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white font-semibold shadow-lg shadow-violet-500/50 hover:shadow-xl hover:shadow-violet-500/70 transition-all hover:scale-105" 
+                  className="flex-1 px-6 py-3 rounded-xl bg-violet-600 text-white font-semibold shadow-lg hover:bg-violet-500 transition-all hover:scale-105" 
                   onClick={confirmBatchBook}
                 >
                   确认预约
