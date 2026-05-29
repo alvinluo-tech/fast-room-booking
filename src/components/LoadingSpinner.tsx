@@ -13,7 +13,7 @@ export function LoadingSpinner({ size = "md", label }: LoadingSpinnerProps) {
   return (
     <div className="flex flex-col items-center gap-3">
       <div
-        className={`${sizeClasses[size]} border-violet-500/30 border-t-violet-500 rounded-full animate-spin`}
+        className={`${sizeClasses[size]} border-white/10 border-t-violet-500 rounded-full animate-spin`}
       />
       {label && <span className="text-sm text-slate-400">{label}</span>}
     </div>

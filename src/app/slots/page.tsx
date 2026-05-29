@@ -5,6 +5,19 @@ import { GradientButton } from "@/components/GradientButton";
 import { GhostButton } from "@/components/GhostButton";
 import { PageShell } from "@/components/PageShell";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import {
+  CaretLeft,
+  CaretRight,
+  Lightning,
+  Sun,
+  Moon,
+  Check,
+  X,
+  CalendarCheck,
+  Clock,
+  WarningCircle,
+  Trash,
+} from "@phosphor-icons/react/dist/ssr";
 
 type SlotItem = { time?: string; provider_id?: string; service_id?: string } & Record<string, unknown>;
 
@@ -17,11 +30,17 @@ function toLocalDateStr(d: Date): string {
 
 const WEEKDAYS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
 
+const BOOKING_CONFIG = {
+  provider: 7,
+  service: 7,
+  count: 1,
+} as const;
+
 const quickSelectButtons = [
   { label: "全选", action: "all" as const, icon: null },
-  { label: "上午 (6-12点)", action: "morning" as const, icon: "🌅" },
-  { label: "下午 (12-18点)", action: "afternoon" as const, icon: "☀️" },
-  { label: "晚上 (18点后)", action: "evening" as const, icon: "🌙" },
+  { label: "上午 (6-12点)", action: "morning" as const, icon: Sun },
+  { label: "下午 (12-18点)", action: "afternoon" as const, icon: Sun },
+  { label: "晚上 (18点后)", action: "evening" as const, icon: Moon },
 ];
 
 export default function SlotsPage() {
@@ -49,7 +68,7 @@ export default function SlotsPage() {
     const maxRetries = 3;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const res = await fetch(`/api/slots?from=${dateToLoad}&to=${dateToLoad}&provider=7&service=7&count=1`);
+        const res = await fetch(`/api/slots?from=${dateToLoad}&to=${dateToLoad}&provider=${BOOKING_CONFIG.provider}&service=${BOOKING_CONFIG.service}&count=${BOOKING_CONFIG.count}`);
         const data = await res.json();
 
         if (!data.ok) {
@@ -177,21 +196,25 @@ export default function SlotsPage() {
     loadSlots(dateStr);
   };
 
-  const selectedDay = Number.parseInt(date.slice(-2), 10);
+  const selectedDay = current.getDate();
 
   return (
     <PageShell maxWidth="6xl">
       {/* Calendar */}
       <GlassCard className="!p-0 overflow-hidden animate-fade-in-up">
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <GhostButton onClick={() => navigateMonth(-1)}>上一月</GhostButton>
-          <div className="font-bold text-xl text-white">{monthLabel}</div>
-          <GhostButton onClick={() => navigateMonth(1)}>下一月</GhostButton>
+        <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
+          <GhostButton onClick={() => navigateMonth(-1)}>
+            <CaretLeft size={18} />
+          </GhostButton>
+          <div className="font-bold text-lg text-white tracking-tight">{monthLabel}</div>
+          <GhostButton onClick={() => navigateMonth(1)}>
+            <CaretRight size={18} />
+          </GhostButton>
         </div>
-        <div className="p-6">
-          <div className="grid grid-cols-7 gap-2">
+        <div className="p-5">
+          <div className="grid grid-cols-7 gap-1.5">
             {WEEKDAYS.map((w) => (
-              <div key={w} className="text-center py-2 text-xs font-semibold text-slate-400">
+              <div key={w} className="text-center py-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                 {w}
               </div>
             ))}
@@ -201,15 +224,18 @@ export default function SlotsPage() {
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const d = i + 1;
               const isSelected = d === selectedDay;
+              const isToday = d === new Date().getDate() && current.getMonth() === new Date().getMonth() && current.getFullYear() === new Date().getFullYear();
               return (
                 <button
                   key={d}
                   type="button"
                   onClick={() => pickDay(d)}
-                  className={`h-12 rounded-xl font-medium transition-all ${
+                  className={`h-11 rounded-xl font-medium text-sm transition-all duration-150 relative ${
                     isSelected
-                      ? "bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-500/50"
-                      : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white hover:scale-105 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                      ? "bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-500/30"
+                      : isToday
+                        ? "bg-white/[0.08] text-white border border-violet-500/30"
+                        : "text-slate-400 hover:bg-white/[0.06] hover:text-white active:scale-95"
                   }`}
                 >
                   {d}
@@ -221,9 +247,10 @@ export default function SlotsPage() {
       </GlassCard>
 
       {/* Time Slots Section */}
-      <div className="space-y-6 animate-fade-in-up-delay-1">
+      <div className="space-y-5 animate-fade-in-up-delay-1">
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
+          <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2.5">
+            <Clock size={22} className="text-violet-400" weight="duotone" />
             可预约时间
           </h2>
           {selectedTimes.size > 0 && (
@@ -237,26 +264,30 @@ export default function SlotsPage() {
         </div>
 
         {/* Quick Select */}
-        <div className="rounded-2xl border border-white/10 backdrop-blur-md bg-gradient-to-br from-blue-500/10 to-violet-500/10 p-6">
-          <div className="text-sm font-semibold mb-4 text-blue-300">{"⚡"} 快速选择</div>
-          <div className="flex gap-3 flex-wrap">
+        <div className="rounded-2xl border border-white/[0.06] backdrop-blur-md bg-white/[0.02] p-5">
+          <div className="text-sm font-semibold mb-3 text-slate-400 flex items-center gap-2">
+            <Lightning size={16} className="text-violet-400" weight="fill" />
+            快速选择
+          </div>
+          <div className="flex gap-2 flex-wrap">
             {quickSelectButtons.map((btn) => (
               <button
                 key={btn.action}
                 type="button"
-                className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-slate-200 hover:bg-white/20 hover:border-white/30 transition-all font-medium active:scale-95"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-slate-300 hover:bg-white/[0.1] hover:text-white transition-all duration-150 font-medium active:scale-95"
                 onClick={() => handleQuickSelect(btn.action)}
               >
-                {btn.icon && `${btn.icon} `}
+                {btn.icon && <btn.icon size={15} className="text-slate-400" />}
                 {btn.label === "全选" ? `全选 (${slots.length})` : btn.label}
               </button>
             ))}
             <button
               type="button"
-              className="px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30 hover:border-red-500/50 transition-all font-medium active:scale-95"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400 hover:bg-red-500/15 hover:border-red-500/30 transition-all duration-150 font-medium active:scale-95"
               onClick={clearSelection}
             >
-              {"✕"} 清除
+              <Trash size={15} />
+              清除
             </button>
           </div>
         </div>
@@ -264,34 +295,40 @@ export default function SlotsPage() {
         {/* Time Slots Grid */}
         <GlassCard className="animate-fade-in-up-delay-2">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-4">
-              <LoadingSpinner size="lg" />
-              <span className="text-slate-400">正在加载时间段...</span>
+            <div className="py-16 space-y-4">
+              <div className="flex flex-wrap gap-3 justify-center">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="skeleton w-24 h-12 rounded-xl" />
+                ))}
+              </div>
+              <div className="text-center">
+                <span className="text-sm text-slate-500">正在加载时间段...</span>
+              </div>
             </div>
           ) : slots.length === 0 ? (
-            <div className="text-center py-16 text-slate-400">
-              <div className="text-5xl mb-4">{"📅"}</div>
-              <p className="text-lg">选择日期查看可用时间</p>
+            <div className="text-center py-16 text-slate-500">
+              <CalendarCheck size={48} className="mx-auto mb-4 text-slate-600" weight="duotone" />
+              <p className="text-base">选择日期查看可用时间</p>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-3">
-              {slots.map((s, i) => {
+            <div className="flex flex-wrap gap-2.5">
+              {slots.map((s) => {
                 const time = String(s.time ?? s["time"]);
                 const isSelected = selectedTimes.has(time);
                 return (
                   <button
-                    key={i}
+                    key={time}
                     type="button"
-                    className={`group px-5 py-3 rounded-xl font-semibold transition-all duration-200 focus:outline-none ${
+                    className={`group px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 focus:outline-none ${
                       isSelected
-                        ? "bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-500/50 scale-105 ring-2 ring-violet-400"
-                        : "bg-white/10 border border-white/20 text-slate-200 hover:bg-white/20 hover:border-white/30 hover:scale-105 focus:ring-2 focus:ring-violet-500/40"
+                        ? "bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-500/30 scale-[1.03] ring-1 ring-violet-400/50"
+                        : "bg-white/[0.05] border border-white/10 text-slate-300 hover:bg-white/[0.1] hover:border-white/20 hover:text-white active:scale-95 focus:ring-2 focus:ring-violet-500/30"
                     }`}
                     onClick={() => toggleTimeSelection(time)}
                   >
-                    <span className="flex items-center gap-2">
-                      {isSelected && <span className="text-lg">✓</span>}
-                      <span className="font-mono text-lg">{time.slice(0, 5)}</span>
+                    <span className="flex items-center gap-1.5">
+                      {isSelected && <Check size={16} weight="bold" />}
+                      <span className="font-mono">{time.slice(0, 5)}</span>
                     </span>
                   </button>
                 );
@@ -299,8 +336,8 @@ export default function SlotsPage() {
             </div>
           )}
 
-          <div className="mt-6 flex items-center justify-between text-sm text-slate-400">
-            <span>{"💡"} 点击时间段进行选择，已选中的时间会高亮显示</span>
+          <div className="mt-5 flex items-center justify-between text-xs text-slate-500">
+            <span>点击时间段进行选择，已选中的时间会高亮显示</span>
             <span className="font-medium">{info}</span>
           </div>
         </GlassCard>
@@ -309,56 +346,56 @@ export default function SlotsPage() {
       {/* Confirmation Modal */}
       {showConfirmModal && (
         <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4"
           onClick={() => setShowConfirmModal(false)}
         >
           <div
-            className="relative rounded-2xl border border-white/20 backdrop-blur-xl bg-slate-900/95 p-8 max-w-lg w-full shadow-2xl animate-scale-in"
+            className="relative rounded-2xl border border-white/10 backdrop-blur-xl bg-slate-900/95 p-8 max-w-lg w-full shadow-2xl animate-scale-in glass-highlight"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center text-2xl shadow-xl shadow-violet-500/50">
-              {"✨"}
+            <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center shadow-xl shadow-violet-500/30">
+              <CalendarCheck size={20} className="text-white" weight="duotone" />
             </div>
 
-            <h3 className="text-2xl font-bold text-center mb-2 mt-4 bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
+            <h3 className="text-xl font-bold text-center mb-1.5 mt-4 text-white tracking-tight">
               确认批量预约
             </h3>
-            <p className="text-center text-slate-400 mb-6">即将为您预约以下时间段</p>
+            <p className="text-center text-slate-500 text-sm mb-6">即将为您预约以下时间段</p>
 
-            <div className="space-y-4 mb-8">
-              <div className="max-h-72 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+            <div className="space-y-4 mb-6">
+              <div className="max-h-64 overflow-y-auto space-y-1.5 pr-2 custom-scrollbar">
                 {Array.from(selectedTimes)
                   .sort()
                   .map((time, i) => (
                     <div
                       key={time}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all"
                     >
-                      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white text-sm font-bold shadow-lg shadow-violet-500/30">
+                      <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/[0.06] text-slate-400 text-xs font-bold">
                         {i + 1}
                       </span>
-                      <div className="flex-1 flex items-center gap-2 text-slate-200">
-                        <span className="font-mono text-sm">{date}</span>
-                        <span className="text-slate-500">→</span>
-                        <span className="font-mono font-bold text-base">{time.slice(0, 5)}</span>
+                      <div className="flex-1 flex items-center gap-2 text-slate-300 text-sm">
+                        <span className="font-mono text-slate-500">{date}</span>
+                        <span className="text-slate-600">-</span>
+                        <span className="font-mono font-semibold text-white">{time.slice(0, 5)}</span>
                       </div>
-                      <span className="text-green-400 text-xl">✓</span>
+                      <Check size={16} className="text-emerald-400" weight="bold" />
                     </div>
                   ))}
               </div>
 
-              <div className="rounded-xl bg-amber-500/10 border border-amber-500/30 p-4 flex items-start gap-3">
-                <span className="text-amber-400 text-xl">{"⚠️"}</span>
+              <div className="rounded-xl bg-amber-500/5 border border-amber-500/20 p-4 flex items-start gap-3">
+                <WarningCircle size={20} className="text-amber-400 shrink-0 mt-0.5" weight="duotone" />
                 <div className="flex-1">
-                  <div className="text-amber-300 font-semibold">注意</div>
-                  <div className="text-amber-200/80 text-sm">
-                    共 <span className="font-bold">{selectedTimes.size}</span> 个时间段，请确认后提交
+                  <div className="text-amber-300 font-semibold text-sm">注意</div>
+                  <div className="text-amber-200/60 text-xs">
+                    共 <span className="font-bold text-amber-200">{selectedTimes.size}</span> 个时间段，请确认后提交
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <GhostButton className="flex-1 py-3 font-semibold" onClick={() => setShowConfirmModal(false)}>
                 取消
               </GhostButton>
