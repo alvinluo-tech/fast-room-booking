@@ -1,9 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
+import { GlassCard } from "@/components/GlassCard";
+import { GradientButton } from "@/components/GradientButton";
+import { GhostButton } from "@/components/GhostButton";
+import { PageShell } from "@/components/PageShell";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { StatusBadge } from "@/components/StatusBadge";
 
 type Booking = {
   id?: string;
-  hash?: string;
   service_name?: string;
   provider_name?: string;
   start_datetime?: string;
@@ -14,7 +19,6 @@ type Booking = {
   end_time?: string;
   code?: string;
   status?: string;
-  is_cancellable?: string;
   service?: { name?: string };
   provider?: { name?: string };
 } & Record<string, unknown>;
@@ -22,9 +26,11 @@ type Booking = {
 export default function BookingsPage() {
   const [items, setItems] = useState<Booking[]>([]);
   const [info, setInfo] = useState("");
+  const [loading, setLoading] = useState(true);
   const [canceling, setCanceling] = useState<string | null>(null);
 
   const loadBookings = async () => {
+    setLoading(true);
     setInfo("加载中...");
     const res = await fetch("/api/bookings");
     const data = await res.json();
@@ -35,6 +41,8 @@ export default function BookingsPage() {
       setInfo(`共 ${list.length} 条预约`);
     } catch {
       setInfo("解析失败");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -42,25 +50,21 @@ export default function BookingsPage() {
     loadBookings();
   }, []);
 
-  const cancelBooking = async (bookingId: string, bookingHash: string) => {
+  const cancelBooking = async (bookingId: string) => {
     if (!confirm("确定要取消这个预约吗？")) return;
-    
+
     setCanceling(bookingId);
     try {
       const res = await fetch(`/api/bookings/${bookingId}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ hash: bookingHash }),
       });
       const data = await res.json();
-      
+
       if (data.ok) {
         alert("预约已取消");
-        loadBookings(); // 重新加载列表
+        loadBookings();
       } else {
-        alert(`取消失败: ${JSON.stringify(data)}`);
+        alert(`取消失败: ${data.data}`);
       }
     } catch (error) {
       alert(`取消失败: ${error}`);
@@ -82,90 +86,75 @@ export default function BookingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-800/30 via-slate-900 to-slate-900 pointer-events-none" />
-      
-      {/* 移除pt-[90px]，使用layout的pt-36统一间距 */}
-      <div className="relative max-w-7xl mx-auto px-6 py-8 space-y-8">
-        <div className="flex gap-6 items-center flex-wrap">
-          <h1 className="text-3xl font-bold text-white">
-            Upcoming Bookings
-          </h1>
-          <button 
-            className="px-4 py-2 rounded-xl border border-slate-600 backdrop-blur-md bg-slate-700/50 text-slate-100 hover:bg-slate-600 hover:text-white transition-all" 
-            onClick={loadBookings}
-          >
-            🔄 刷新
-          </button>
-          <div className="ml-auto text-sm text-slate-200">{info}</div>
+    <PageShell maxWidth="7xl">
+      <div className="flex gap-6 items-center flex-wrap animate-fade-in-up">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
+          我的预约
+        </h1>
+        <GhostButton onClick={loadBookings}>{"🔄"} 刷新</GhostButton>
+        <div className="ml-auto text-sm text-slate-400">{info}</div>
+      </div>
+
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <LoadingSpinner size="lg" />
+          <span className="text-slate-400">正在加载预约记录...</span>
         </div>
-        
-        {items.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-slate-800/60 text-4xl mb-6">
-              📭
-            </div>
-            <p className="text-xl text-slate-300 mb-6">暂无预约记录</p>
-            <a href="/slots" className="inline-block px-6 py-3 rounded-xl bg-violet-600 text-white font-semibold shadow-lg hover:bg-violet-500 transition-all hover:scale-105">
-              前往预约
-            </a>
+      ) : items.length === 0 ? (
+        <div className="text-center py-20 animate-fade-in-up">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-500/20 to-blue-600/20 text-4xl mb-6">
+            {"📭"}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {items.map((b, i) => (
-              <div key={i} className="group rounded-2xl border border-slate-700/50 backdrop-blur-md bg-slate-800/40 p-6 space-y-4 hover:bg-slate-800/60 hover:border-slate-600 transition-all duration-300 shadow-xl">
-                <div className="font-bold text-xl text-white">
-                  {String(b.service?.name || b.service_name || "Room Booking")}
-                </div>
-                
-                <div className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-2 text-sm">
-                  <div className="text-slate-300">Start:</div>
-                  <div className="font-mono text-slate-100 font-medium">{formatDateTime(b)}</div>
-                  
-                  <div className="text-slate-300">End:</div>
-                  <div className="font-mono text-slate-100 font-medium">{formatEndTime(b)}</div>
-                  
-                  <div className="text-slate-300">Location:</div>
-                  <div className="text-slate-100">{String(b.provider?.name || b.provider_name || "")}</div>
-                  
-                  <div className="text-slate-300">Code:</div>
-                  <div className="font-mono font-bold text-violet-400">{String(b.code || "")}</div>
-                  
-                  <div className="text-slate-300">Status:</div>
-                  <div>
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                      b.status === "confirmed" 
-                        ? "bg-green-600/80 text-white border border-green-500" 
-                        : "bg-slate-600 text-slate-200 border border-slate-500"
-                    }`}>
-                      {String(b.status || "")}
-                    </span>
-                  </div>
-                  
-                  <div className="text-slate-300">ID:</div>
-                  <div className="font-mono text-xs text-slate-400">{String(b.id || "")}</div>
-                  
-                  <div className="text-slate-300">Hash:</div>
-                  <div className="font-mono text-xs text-slate-400">{String(b.hash || "").substring(0, 16)}...</div>
-                </div>
-                
-                <div className="flex gap-3 pt-2">
-                  <button 
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-red-500 bg-red-600/80 text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
-                    onClick={() => cancelBooking(String(b.id), String(b.hash || ""))}
-                    disabled={canceling === String(b.id) || b.is_cancellable !== "1"}
-                  >
-                    {canceling === String(b.id) ? "取消中..." : b.is_cancellable !== "1" ? "不可取消" : "取消预约"}
-                  </button>
-                  <button className="flex-1 px-4 py-2.5 rounded-xl bg-amber-600 text-white hover:bg-amber-500 transition-all font-medium shadow-lg">
-                    📅 Add to calendar
-                  </button>
+          <p className="text-xl text-slate-400 mb-6">暂无预约记录</p>
+          <a href="/slots">
+            <GradientButton className="px-8 py-3 text-base">前往预约</GradientButton>
+          </a>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in-up-delay-1">
+          {items.map((b, i) => (
+            <GlassCard
+              key={b.id ?? i}
+              hover
+              className="group space-y-4 hover:-translate-y-0.5"
+            >
+              <div className="font-bold text-xl text-white">
+                {String(b.service?.name || b.service_name || "Room Booking")}
+              </div>
+
+              <div className="grid grid-cols-[80px_1fr] gap-x-3 gap-y-2.5 text-sm">
+                <div className="text-slate-400">开始</div>
+                <div className="font-mono text-slate-200 font-medium">{formatDateTime(b)}</div>
+
+                <div className="text-slate-400">结束</div>
+                <div className="font-mono text-slate-200 font-medium">{formatEndTime(b)}</div>
+
+                <div className="text-slate-400">地点</div>
+                <div className="text-slate-200">{String(b.provider?.name || b.provider_name || "")}</div>
+
+                <div className="text-slate-400">编号</div>
+                <div className="font-mono font-bold text-violet-400">{String(b.code || "")}</div>
+
+                <div className="text-slate-400">状态</div>
+                <div>
+                  <StatusBadge status={String(b.status || "")} />
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  className="w-full px-4 py-2.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20 hover:border-red-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium active:scale-[0.98]"
+                  onClick={() => cancelBooking(String(b.id))}
+                  disabled={canceling === String(b.id)}
+                >
+                  {canceling === String(b.id) ? "取消中..." : "取消预约"}
+                </button>
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      )}
+    </PageShell>
   );
 }
