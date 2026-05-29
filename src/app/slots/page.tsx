@@ -4,7 +4,6 @@ import { GlassCard } from "@/components/GlassCard";
 import { GradientButton } from "@/components/GradientButton";
 import { GhostButton } from "@/components/GhostButton";
 import { PageShell } from "@/components/PageShell";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
 import {
   CaretLeft,
   CaretRight,
@@ -12,11 +11,11 @@ import {
   Sun,
   Moon,
   Check,
-  X,
   CalendarCheck,
   Clock,
   WarningCircle,
   Trash,
+  Info,
 } from "@phosphor-icons/react/dist/ssr";
 
 type SlotItem = { time?: string; provider_id?: string; service_id?: string } & Record<string, unknown>;
@@ -28,7 +27,15 @@ function toLocalDateStr(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-const WEEKDAYS = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+const WEEKDAYS = [
+  { label: "一", weekend: false },
+  { label: "二", weekend: false },
+  { label: "三", weekend: false },
+  { label: "四", weekend: false },
+  { label: "五", weekend: false },
+  { label: "六", weekend: true },
+  { label: "日", weekend: true },
+];
 
 const BOOKING_CONFIG = {
   provider: 7,
@@ -38,9 +45,9 @@ const BOOKING_CONFIG = {
 
 const quickSelectButtons = [
   { label: "全选", action: "all" as const, icon: null },
-  { label: "上午 (6-12点)", action: "morning" as const, icon: Sun },
-  { label: "下午 (12-18点)", action: "afternoon" as const, icon: Sun },
-  { label: "晚上 (18点后)", action: "evening" as const, icon: Moon },
+  { label: "上午", action: "morning" as const, icon: Sun },
+  { label: "下午", action: "afternoon" as const, icon: Sun },
+  { label: "晚上", action: "evening" as const, icon: Moon },
 ];
 
 export default function SlotsPage() {
@@ -197,25 +204,31 @@ export default function SlotsPage() {
   };
 
   const selectedDay = current.getDate();
+  const today = new Date();
 
   return (
     <PageShell maxWidth="6xl">
       {/* Calendar */}
       <GlassCard className="!p-0 overflow-hidden animate-fade-in-up">
-        <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
           <GhostButton onClick={() => navigateMonth(-1)}>
             <CaretLeft size={18} />
           </GhostButton>
-          <div className="font-bold text-lg text-white tracking-tight">{monthLabel}</div>
+          <div className="font-semibold text-base text-white tracking-tight">{monthLabel}</div>
           <GhostButton onClick={() => navigateMonth(1)}>
             <CaretRight size={18} />
           </GhostButton>
         </div>
         <div className="p-5">
-          <div className="grid grid-cols-7 gap-1.5">
+          <div className="grid grid-cols-7 gap-1">
             {WEEKDAYS.map((w) => (
-              <div key={w} className="text-center py-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                {w}
+              <div
+                key={w.label}
+                className={`text-center py-2 text-[11px] font-medium uppercase tracking-wider ${
+                  w.weekend ? "text-violet-400/50" : "text-slate-600"
+                }`}
+              >
+                {w.label}
               </div>
             ))}
             {Array.from({ length: startWeekday }).map((_, i) => (
@@ -224,18 +237,23 @@ export default function SlotsPage() {
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const d = i + 1;
               const isSelected = d === selectedDay;
-              const isToday = d === new Date().getDate() && current.getMonth() === new Date().getMonth() && current.getFullYear() === new Date().getFullYear();
+              const isToday = d === today.getDate() && current.getMonth() === today.getMonth() && current.getFullYear() === today.getFullYear();
+              const dayOfWeek = (startWeekday + d - 1) % 7;
+              const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+
               return (
                 <button
                   key={d}
                   type="button"
                   onClick={() => pickDay(d)}
-                  className={`h-11 rounded-xl font-medium text-sm transition-all duration-150 relative ${
+                  className={`h-10 rounded-lg font-medium text-sm transition-all duration-150 relative ${
                     isSelected
-                      ? "bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-500/30"
+                      ? "bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-500/25 ring-1 ring-violet-400/30 animate-pulse-glow"
                       : isToday
                         ? "bg-white/[0.08] text-white border border-violet-500/30"
-                        : "text-slate-400 hover:bg-white/[0.06] hover:text-white active:scale-95"
+                        : isWeekend
+                          ? "text-violet-400/40 hover:bg-white/[0.04] hover:text-violet-300 active:scale-95"
+                          : "text-slate-400 hover:bg-white/[0.05] hover:text-white active:scale-95"
                   }`}
                 >
                   {d}
@@ -248,13 +266,19 @@ export default function SlotsPage() {
 
       {/* Time Slots Section */}
       <div className="space-y-5 animate-fade-in-up-delay-1">
+        {/* Header with count badge */}
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            <Clock size={22} className="text-violet-400" weight="duotone" />
+          <h2 className="text-lg font-semibold tracking-tight text-white flex items-center gap-2.5">
+            <Clock size={20} className="text-violet-400" weight="duotone" />
             可预约时间
+            {slots.length > 0 && !loading && (
+              <span className="px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-xs font-medium text-violet-300">
+                {slots.length} 个可用
+              </span>
+            )}
           </h2>
           {selectedTimes.size > 0 && (
-            <div className="flex gap-3">
+            <div className="flex gap-2.5">
               <GradientButton onClick={batchBookSelected} disabled={batchBooking}>
                 {batchBooking ? "预约中..." : `批量预约 (${selectedTimes.size})`}
               </GradientButton>
@@ -263,32 +287,34 @@ export default function SlotsPage() {
           )}
         </div>
 
-        {/* Quick Select */}
-        <div className="rounded-2xl border border-white/[0.06] backdrop-blur-md bg-white/[0.02] p-5">
-          <div className="text-sm font-semibold mb-3 text-slate-400 flex items-center gap-2">
-            <Lightning size={16} className="text-violet-400" weight="fill" />
-            快速选择
-          </div>
-          <div className="flex gap-2 flex-wrap">
+        {/* Quick Select - integrated bar */}
+        <div className="glass rounded-xl p-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-medium text-slate-500 mr-1 flex items-center gap-1.5">
+              <Lightning size={13} className="text-violet-400" weight="fill" />
+              快速选择
+            </span>
             {quickSelectButtons.map((btn) => (
               <button
                 key={btn.action}
                 type="button"
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-slate-300 hover:bg-white/[0.1] hover:text-white transition-all duration-150 font-medium active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-xs text-slate-300 hover:bg-white/[0.08] hover:text-white transition-all duration-150 font-medium active:scale-95"
                 onClick={() => handleQuickSelect(btn.action)}
               >
-                {btn.icon && <btn.icon size={15} className="text-slate-400" />}
+                {btn.icon && <btn.icon size={13} className="text-slate-400" />}
                 {btn.label === "全选" ? `全选 (${slots.length})` : btn.label}
               </button>
             ))}
-            <button
-              type="button"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400 hover:bg-red-500/15 hover:border-red-500/30 transition-all duration-150 font-medium active:scale-95"
-              onClick={clearSelection}
-            >
-              <Trash size={15} />
-              清除
-            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 hover:bg-red-500/15 transition-all duration-150 font-medium active:scale-95"
+                onClick={clearSelection}
+              >
+                <Trash size={13} />
+                清除
+              </button>
+            </div>
           </div>
         </div>
 
@@ -296,22 +322,22 @@ export default function SlotsPage() {
         <GlassCard className="animate-fade-in-up-delay-2">
           {loading ? (
             <div className="py-16 space-y-4">
-              <div className="flex flex-wrap gap-3 justify-center">
+              <div className="flex flex-wrap gap-2.5 justify-center">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="skeleton w-24 h-12 rounded-xl" />
+                  <div key={i} className="skeleton w-24 h-10 rounded-xl" />
                 ))}
               </div>
               <div className="text-center">
-                <span className="text-sm text-slate-500">正在加载时间段...</span>
+                <span className="text-xs text-slate-500">正在加载时间段...</span>
               </div>
             </div>
           ) : slots.length === 0 ? (
             <div className="text-center py-16 text-slate-500">
               <CalendarCheck size={48} className="mx-auto mb-4 text-slate-600" weight="duotone" />
-              <p className="text-base">选择日期查看可用时间</p>
+              <p className="text-sm">选择日期查看可用时间</p>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap gap-2">
               {slots.map((s) => {
                 const time = String(s.time ?? s["time"]);
                 const isSelected = selectedTimes.has(time);
@@ -319,15 +345,15 @@ export default function SlotsPage() {
                   <button
                     key={time}
                     type="button"
-                    className={`group px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 focus:outline-none ${
+                    className={`px-4 py-2 rounded-xl font-medium text-sm transition-all duration-150 focus:outline-none ${
                       isSelected
-                        ? "bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-500/30 scale-[1.03] ring-1 ring-violet-400/50"
-                        : "bg-white/[0.05] border border-white/10 text-slate-300 hover:bg-white/[0.1] hover:border-white/20 hover:text-white active:scale-95 focus:ring-2 focus:ring-violet-500/30"
+                        ? "bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-violet-500/20 scale-[1.03] ring-1 ring-violet-400/40"
+                        : "bg-white/[0.04] border border-white/[0.08] text-slate-300 hover:bg-white/[0.08] hover:border-white/[0.15] hover:text-white active:scale-95 focus:ring-2 focus:ring-violet-500/30"
                     }`}
                     onClick={() => toggleTimeSelection(time)}
                   >
                     <span className="flex items-center gap-1.5">
-                      {isSelected && <Check size={16} weight="bold" />}
+                      {isSelected && <Check size={15} weight="bold" />}
                       <span className="font-mono">{time.slice(0, 5)}</span>
                     </span>
                   </button>
@@ -336,9 +362,18 @@ export default function SlotsPage() {
             </div>
           )}
 
-          <div className="mt-5 flex items-center justify-between text-xs text-slate-500">
-            <span>点击时间段进行选择，已选中的时间会高亮显示</span>
-            <span className="font-medium">{info}</span>
+          {/* Status bar with live indicator */}
+          <div className="mt-5 pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <Info size={13} />
+              点击时间段进行选择
+            </span>
+            <span className="flex items-center gap-1.5 font-medium">
+              {!loading && slots.length > 0 && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              )}
+              {info}
+            </span>
           </div>
         </GlassCard>
       </div>
@@ -350,7 +385,7 @@ export default function SlotsPage() {
           onClick={() => setShowConfirmModal(false)}
         >
           <div
-            className="relative rounded-2xl border border-white/10 backdrop-blur-xl bg-slate-900/95 p-8 max-w-lg w-full shadow-2xl animate-scale-in glass-highlight"
+            className="relative rounded-2xl border border-white/10 backdrop-blur-xl bg-[#0e0e16]/95 p-8 max-w-lg w-full shadow-2xl animate-scale-in glass-highlight"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center shadow-xl shadow-violet-500/30">

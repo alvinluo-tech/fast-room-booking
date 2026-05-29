@@ -41,10 +41,11 @@ const stats = [
 
 export default function Home() {
   return (
-    <div className="min-h-[100dvh] bg-slate-950 relative grain-overlay">
+    <div className="min-h-[100dvh] bg-[#08080d] relative grain-overlay">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[128px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-blue-600/8 rounded-full blur-[128px]" />
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet-600/8 rounded-full blur-[140px]" />
+        <div className="absolute bottom-1/3 right-1/6 w-[400px] h-[400px] bg-blue-600/6 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-emerald-600/4 rounded-full blur-[100px]" />
       </div>
 
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-16 space-y-20">

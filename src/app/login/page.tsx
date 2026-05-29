@@ -32,9 +32,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-slate-950 flex items-center justify-center p-6 relative grain-overlay">
+    <div className="min-h-[100dvh] bg-[#08080d] flex items-center justify-center p-6 relative grain-overlay">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[128px]" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-violet-600/8 rounded-full blur-[140px]" />
       </div>
 
       <div className="relative max-w-md w-full animate-fade-in-up">

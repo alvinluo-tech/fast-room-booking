@@ -88,74 +88,79 @@ export default function BookingsPage() {
 
   return (
     <PageShell maxWidth="7xl">
-      <div className="flex gap-6 items-center flex-wrap animate-fade-in-up">
-        <h1 className="text-3xl font-bold tracking-tight text-white">
+      <div className="flex gap-4 items-center flex-wrap animate-fade-in-up">
+        <h1 className="text-2xl font-semibold tracking-tight text-white">
           我的预约
         </h1>
         <GhostButton onClick={loadBookings}>
           <span className="flex items-center gap-1.5">
-            <ArrowsClockwise size={16} />
+            <ArrowsClockwise size={15} />
             刷新
           </span>
         </GhostButton>
-        <div className="ml-auto text-sm text-slate-500">{info}</div>
+        <div className="ml-auto text-xs text-slate-500">{info}</div>
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
           <LoadingSpinner size="lg" />
-          <span className="text-slate-500">正在加载预约记录...</span>
+          <span className="text-sm text-slate-500">正在加载预约记录...</span>
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-20 animate-fade-in-up">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/[0.03] border border-white/10 text-slate-600 mb-6">
-            <CalendarBlank size={36} weight="duotone" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-slate-600 mb-6">
+            <CalendarBlank size={32} weight="duotone" />
           </div>
-          <p className="text-lg text-slate-500 mb-6">暂无预约记录</p>
+          <p className="text-base text-slate-500 mb-6">暂无预约记录</p>
           <a href="/slots">
-            <GradientButton className="px-8 py-3 text-base">前往预约</GradientButton>
+            <GradientButton className="px-8 py-3 text-sm">前往预约</GradientButton>
           </a>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 animate-fade-in-up-delay-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 animate-fade-in-up-delay-1">
           {items.map((b, i) => (
             <GlassCard
               key={b.id ?? i}
               hover
-              className="group space-y-4"
+              className="!p-5 space-y-3"
             >
-              <div className="font-bold text-lg text-white">
-                {String(b.service?.name || b.service_name || "Room Booking")}
+              {/* Header: title + status */}
+              <div className="flex items-center justify-between">
+                <div className="font-semibold text-sm text-white">
+                  {String(b.service?.name || b.service_name || "Room Booking")}
+                </div>
+                <StatusBadge status={String(b.status || "")} />
               </div>
 
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center gap-3 text-slate-300">
-                  <CalendarBlank size={16} className="text-slate-500 shrink-0" />
-                  <span className="font-mono">{formatDateTime(b)}</span>
+              {/* Info rows */}
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center gap-2.5 text-slate-400">
+                  <CalendarBlank size={14} className="text-slate-500 shrink-0" />
+                  <span className="font-mono text-slate-300">{formatDateTime(b)}</span>
                   <span className="text-slate-600">-</span>
-                  <span className="font-mono">{formatEndTime(b)}</span>
+                  <span className="font-mono text-slate-300">{formatEndTime(b)}</span>
                 </div>
 
-                <div className="flex items-center gap-3 text-slate-300">
-                  <MapPin size={16} className="text-slate-500 shrink-0" />
+                <div className="flex items-center gap-2.5 text-slate-400">
+                  <MapPin size={14} className="text-slate-500 shrink-0" />
                   <span>{String(b.provider?.name || b.provider_name || "")}</span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Hash size={16} className="text-slate-500 shrink-0" />
-                  <span className="font-mono font-bold text-violet-400">{String(b.code || "")}</span>
-                  <StatusBadge status={String(b.status || "")} />
+                <div className="flex items-center gap-2.5">
+                  <Hash size={14} className="text-slate-500 shrink-0" />
+                  <span className="font-mono font-semibold text-violet-400">{String(b.code || "")}</span>
                 </div>
               </div>
 
-              <div className="pt-2">
+              {/* Cancel button */}
+              <div className="pt-2 border-t border-white/[0.06]">
                 <button
                   type="button"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs text-red-400/70 hover:text-red-400 hover:bg-red-500/5 border border-transparent hover:border-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium active:scale-[0.98]"
                   onClick={() => cancelBooking(String(b.id))}
                   disabled={canceling === String(b.id)}
                 >
-                  <Trash size={16} />
+                  <Trash size={14} />
                   {canceling === String(b.id) ? "取消中..." : "取消预约"}
                 </button>
               </div>
